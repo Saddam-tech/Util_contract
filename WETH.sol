@@ -1,19 +1,20 @@
-pragma solidity ^0.4.24;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 contract WETH {
     string public name = "Wrapped Ether";
     string public symbol = "WETH";
-    uint8  public decimals = 18;
+    uint8 public decimals = 18;
 
-    event  Approval(address indexed src, address indexed guy, uint wad);
-    event  Transfer(address indexed src, address indexed dst, uint wad);
-    event  Deposit(address indexed dst, uint wad);
-    event  Withdrawal(address indexed src, uint wad);
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
+    event Deposit(address indexed dst, uint wad);
+    event Withdrawal(address indexed src, uint wad);
 
-    mapping(address => uint) public  balanceOf;
-    mapping(address => mapping(address => uint)) public  allowance;
+    mapping(address => uint) public balanceOf;
+    mapping(address => mapping(address => uint)) public allowance;
 
-    function() public payable {
+    receive() external payable {
         deposit();
     }
 
@@ -23,9 +24,9 @@ contract WETH {
     }
 
     function withdraw(uint wad) public {
-        require(balanceOf[msg.sender] >= wad);
+        require(balanceOf[msg.sender] >= wad, "Insufficient balance");
         balanceOf[msg.sender] -= wad;
-        msg.sender.transfer(wad);
+        payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
     }
 
@@ -43,14 +44,17 @@ contract WETH {
         return transferFrom(msg.sender, dst, wad);
     }
 
-    function transferFrom(address src, address dst, uint wad)
-    public
-    returns (bool)
-    {
-        require(balanceOf[src] >= wad);
+    function transferFrom(
+        address src,
+        address dst,
+        uint wad
+    ) public returns (bool) {
+        require(balanceOf[src] >= wad, "Insufficient balance");
 
-        if (src != msg.sender && allowance[src][msg.sender] != uint(- 1)) {
-            require(allowance[src][msg.sender] >= wad);
+        if (
+            src != msg.sender && allowance[src][msg.sender] != type(uint256).max
+        ) {
+            require(allowance[src][msg.sender] >= wad, "Allowance exceeded");
             allowance[src][msg.sender] -= wad;
         }
 
@@ -62,3 +66,4 @@ contract WETH {
         return true;
     }
 }
+
